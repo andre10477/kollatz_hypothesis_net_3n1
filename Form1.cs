@@ -30,90 +30,75 @@ namespace _3N_1
             chart1.Series[0].ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void button1_Click(object sender, EventArgs e) //Кнопка "Вычислить"
         {
-            int chislo = Convert.ToInt32(richTextBox1.Text);
-            z.function(chislo);
-            for (int i = 0; i < z.Xm.Length; i++)
+            richTextBox2.Text = "";
+            chart1.Series[0].Points.Clear();
+            z.ClearLists();
+            try
             {
-                richTextBox2.Text += $"X={z.Xm[i]}, Y={z.Ym[i]}\n";
-                chart1.Series["Series1"].Points.AddXY(z.Xm[i], z.Ym[i]);
+                int chislo = Convert.ToInt32(richTextBox1.Text);
+                z.function(chislo);
+                for (int i = 0; i < z.Xm.Count; i++)
+                {
+                    richTextBox2.Text += $"X={z.Xm[i]}, Y={z.Ym[i]}\n";
+                    chart1.Series[0].Points.AddXY(z.Xm[i], z.Ym[i]);
+                }
+                chart1.ChartAreas[0].AxisX.MaximumAutoSize = 90;
             }
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            richTextBox1.Clear();
-            richTextBox2.Clear();
-            chart1.Series["Series1"].Points.Clear();
-            z.ClearArrays();
+            catch (FormatException ex)
+            {
+                richTextBox1.Text = ex.Message + "Впишите любое число больше нуля.";
+            }
         }
     }
 
-    public interface Service //шаблон интерфейса(для будущего улучшения кода)
+    public interface Service //Интерфейс с функциями
     {
-        void ClearArrays();
+        void ClearLists();
         int algorithm(int n);
         void function(int chislo);
     }
 
-    public class Zadacha : Service
+    public class Zadacha : Service //Класс с алгоритмом
     {
         bool error = false;
-        public int[] Xm = new int[99999999];
-        public int[] Ym = new int[99999999];
-        public virtual void ClearArrays()
+        public List<int> Xm = new List<int>();
+        public List<int> Ym = new List<int>();
+        public virtual void ClearLists() //Очистка списков
         {
-            Array.Clear(Xm, 0, Xm.Length);
-            Array.Clear(Ym, 0, Ym.Length);
+            Xm.Clear();
+            Ym.Clear();
         }
 
-        public virtual int algorithm(int n)
-        {
-            int func = 3 * n + 1;
-            return func;
-        }
+        //3N+1
+        public virtual int algorithm(int n) =>  3 * n + 1;
 
-        public void function(int chislo)
+        public void function(int chislo) //Основные вычисления
         {
             int y = chislo;
-            int i = 0;
-            try
+            int i = 1; // Индекс шагов начинается с 1
+            Xm.Add(i); // Добавляем первый шаг (индекс)
+            Ym.Add(y); // Добавляем первое введённое число
+
+            while (y != 1) // Выполняем, пока число не станет 1
             {
-                while (true)
+                if (y % 2 == 1) // Если число нечетное
                 {
-                    if (y == 1)
-                    {
-                        break;
-                    }
-                    Ym[i] = y;
-                    Xm[i] = i;
-                    if (y % 2 == 1)
-                    {
-                        y = algorithm(y);
-                    }
-                    else
-                    {
-                        y = y / 2;
-                    }
-                    i++;
-                    if (i >= Ym.Length)
-                    {
-                        throw new IndexOutOfRangeException("Слишком много данных");
-                    }
-                    Ym[i] = y;
-                    Xm[i] = i;
+                    y = algorithm(y); // Применяем алгоритм 3n+1
                 }
+                else // Если число четное
+                {
+                    y = y / 2; // Делим на 2
+                }
+
+                i++; // Увеличиваем индекс шагов
+                Xm.Add(i); // Добавляем новый шаг (индекс)
+                Ym.Add(y); // Добавляем новое значение числа
             }
-            catch (IndexOutOfRangeException e) //сделать работу с формой
-            {
-                MessageBox.Show(e.Message);
-                ClearArrays();
-            }
-            RemoveZeroValues();
         }
 
-        public string Error()
+        public string Error() //Ошибка ввода
         {
             if (error == true)
             {
@@ -125,29 +110,10 @@ namespace _3N_1
                 return "";
             }
         }
-        private void RemoveZeroValues()
+        private void RemoveZeroValues() //Удаление нулей
         {
-            List<int> nonZeroIndices = new List<int>();
-
-            for (int i = 0; i < Xm.Length; i++)
-            {
-                if (!(Xm[i] == 0 && Ym[i] == 0))
-                {
-                    nonZeroIndices.Add(i);
-                }
-            }
-
-            int[] newXm = new int[nonZeroIndices.Count];
-            int[] newYm = new int[nonZeroIndices.Count];
-
-            for (int i = 0; i < nonZeroIndices.Count; i++)
-            {
-                newXm[i] = Xm[nonZeroIndices[i]];
-                newYm[i] = Ym[nonZeroIndices[i]];
-            }
-
-            Xm = newXm;
-            Ym = newYm;
+            Xm.RemoveAll(item => item == 0);
+            Ym.RemoveAll(item => item == 0);
         }
     }
 }
